@@ -4,40 +4,58 @@ app = Flask(__name__)
 
 @app.route("/recipe", methods=['GET'])
 def get_recipes_top_10():
+    """Gets the top 10 recipes."""
     if not is_authorized():
         return Response("{'not': 'happening'}", status=401, mimetype='application/json')
-    
+
     recipes = []
     for _ in range(10):
         recipes.append(json.loads(sample_recipe))
-    
+
     return jsonify(recipes)
 
 @app.route("/recipe/<recipe_id>", methods=['GET'])
 def get_recipe_by_id(recipe_id):
+    """Gets one recipe by its recipe id."""
     if not is_authorized():
         return Response("{'not': 'happening'}", status=401, mimetype='application/json')
 
     db_response = get_recipe_from_db(recipe_id)
-    
+
      # Do things
-    
+
     return jsonify(json.loads(sample_recipe))
 
 @app.route("/recipe", methods=["POST"])
 def create_recipe():
+    """Creates a recipe based on receieved parameters and adds it to the db."""
     if not is_authorized():
         return Response("{'not': 'happening'}", status=401, mimetype='application/json')
 
-    #Create recipe here
-    
+    add_recipe_to_db(full_content=json.loads(sample_recipe))
+
     return Response("Created", status=201, mimetype='application/json')
 
-
 def get_recipe_from_db(recipe_id):
+    """Gets a recipe from the db from the recipe id."""
+    # calls from db module here
+    return ""
+
+def add_recipe_to_db(*args, **kwargs):
+    """Adds a recipe to the db."""
+    # calls from db module here
+    if "full_content" in kwargs:
+        # generate all fields as in kwargs["full_content"].
+        # use this to just copy from scraped data already formatted in schema.
+        pass
+    else:
+        # populate user settable fields from form and auto generate the rest.
+        # e.g. no initial rating, no comments.
+        pass
     return ""
 
 def is_authorized():
+    """Checks if the user is authorized."""
     return True
 
 sample_recipe = """

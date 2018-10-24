@@ -1,6 +1,35 @@
 import json
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Response, jsonify, request, abort
+import dataset
+
+# How to search ingredients list in DB call? For now it's just json array. Needs to be searchable
+# And countable. Eg: My query matches 4 out of 5 ingredients for this recipe
 app = Flask(__name__)
+
+@app.before_first_request
+def startup():
+    """Startup Code"""
+
+            # Prepopulate in-memory DB with sample recipes
+    db = dataset.connect('sqlite:///:memory:')
+    recipes_table = db['recipes']
+
+    with open('recipes.txt') as json_data:
+        recipes = json.load(json_data)
+    
+    for r in recipes:
+        recipes_table.insert(dict(
+            name=r['name'],
+
+            # How to store a list in DB that allows for matching x out of y ingredients?
+            # Obviously this won't do it
+            recipeIngredient=json.dumps(r['recipeIngredient']),
+            recipeYield=r['recipeYield'],
+
+            # Need to extract the steps. Keep steps broken up or merge them into one text file?
+            recipeInstructions=json.dumps(r['recipeInstructions'])
+            ))
+
 
 @app.route("/recipe", methods=['GET'])
 def get_recipes_top_10():
@@ -31,6 +60,8 @@ def create_recipe():
     """Creates a recipe based on receieved parameters and adds it to the db."""
     if not is_authorized():
         return Response("{'not': 'happening'}", status=401, mimetype='application/json')
+    if not request.is_json:
+        abort(400)
 
     add_recipe_to_db(full_content=json.loads(sample_recipe))
 

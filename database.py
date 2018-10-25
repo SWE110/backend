@@ -21,15 +21,15 @@ def connect():
         db_version = connect.cur.fetchone()
         print(db_version)
     except:
-        print 'Cannot connect to Database'
+        print('Cannot connect to Database')
 
 def disconnect():
     try:
-        print "Closing connection to the PostgreSQL database..."
+        print('Closing connection to the PostgreSQL database...')
         connect.cur.close()
-        print "Connection closed!"
+        print ('Connection closed!')
     except:
-        print 'Cannot disconnect from Database'
+        print ('Cannot disconnect from Database')
 
 #data has to be exactly like recipes.txt on gitlab (as of Oct 24, 2018 3:57am)
 def insertRecipes(data):

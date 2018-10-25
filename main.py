@@ -3,10 +3,13 @@ import itertools
 
 import flask
 import dataset
+import flask_restful
 
 import models
+import resources
 
 app = flask.Flask(__name__)
+api = flask_restful.Api(app)
 models.db.init_app
 
 @app.before_first_request
@@ -35,51 +38,54 @@ def startup():
         ))
     db.commit()
 
-@app.route("/recipe", methods=['GET'])
-def get_recipes_top_10():
-    """Gets the top 10 recipes."""
-    if not is_authorized():
-        return flask.Response("{'not': 'happening'}", status=401, mimetype='application/json')
+api.add_resource(resources.RecipeList, "/recipe")
+api.add_resource(resources.Recipe, "/recipe/<recipe_id>")
 
-    # Can we persist the db handle? Tried to persist in Flask.g didn't seem to
-    # work but could be user error
-    db = dataset.connect('sqlite:///recipe.db')
-    recipes_table = db['recipes']
-    all_results = recipes_table.all()
-    # Get 10
-    results_list = [r for r in itertools.islice(all_results, 10)]
-    return flask.jsonify(results_list)
+# @app.route("/recipe", methods=['GET'])
+# def get_recipes_top_10():
+    # """Gets the top 10 recipes."""
+    # if not is_authorized():
+        # return flask.Response("{'not': 'happening'}", status=401, mimetype='application/json')
 
-@app.route("/recipe/<recipe_id>", methods=['GET'])
-def get_recipe_by_id(recipe_id):
-    """Gets one recipe by its recipe id."""
-    if not is_authorized():
-        return flask.Response("{'not': 'happening'}", status=401, mimetype='application/json')
+    # # Can we persist the db handle? Tried to persist in Flask.g didn't seem to
+    # # work but could be user error
+    # db = dataset.connect('sqlite:///recipe.db')
+    # recipes_table = db['recipes']
+    # all_results = recipes_table.all()
+    # # Get 10
+    # results_list = [r for r in itertools.islice(all_results, 10)]
+    # return flask.jsonify(results_list)
 
-    db = dataset.connect('sqlite:///recipe.db')
-    recipes_table = db['recipes']
+# @app.route("/recipe/<recipe_id>", methods=['GET'])
+# def get_recipe_by_id(recipe_id):
+    # """Gets one recipe by its recipe id."""
+    # if not is_authorized():
+        # return flask.Response("{'not': 'happening'}", status=401, mimetype='application/json')
 
-    one_result_in_list = recipes_table.find(id=recipe_id)
-    result = [r for r in itertools.islice(one_result_in_list, 1)][0]
-    print(result)
-    return flask.jsonify(result)
+    # db = dataset.connect('sqlite:///recipe.db')
+    # recipes_table = db['recipes']
 
-@app.route("/recipe", methods=["POST"])
-def create_recipe():
-    """Creates a recipe based on receieved parameters and adds it to the db."""
-    if not is_authorized():
-        return flask.Response("{'not': 'happening'}", status=401, mimetype='application/json')
-    if not flask.request.is_json:
-        flask.abort(400)
-    print("Creating recipe")
-    incoming_recipe = flask.request.get_json()
+    # one_result_in_list = recipes_table.find(id=recipe_id)
+    # result = [r for r in itertools.islice(one_result_in_list, 1)][0]
+    # print(result)
+    # return flask.jsonify(result)
 
-    # For now assumes full_content
-    recipe_created = add_recipe_to_db(full_content=incoming_recipe)
-    if not recipe_created:
-        flask.abort(500)
+# @app.route("/recipe", methods=["POST"])
+# def create_recipe():
+    # """Creates a recipe based on receieved parameters and adds it to the db."""
+    # if not is_authorized():
+        # return flask.Response("{'not': 'happening'}", status=401, mimetype='application/json')
+    # if not flask.request.is_json:
+        # flask.abort(400)
+    # print("Creating recipe")
+    # incoming_recipe = flask.request.get_json()
 
-    return flask.Response("Created", status=201, mimetype='application/json')
+    # # For now assumes full_content
+    # recipe_created = add_recipe_to_db(full_content=incoming_recipe)
+    # if not recipe_created:
+        # flask.abort(500)
+
+    # return flask.Response("Created", status=201, mimetype='application/json')
 
 def add_recipe_to_db(*args, **kwargs):
     """Adds a recipe to the db."""

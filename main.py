@@ -4,7 +4,10 @@ import itertools
 import flask
 import dataset
 
+import models
+
 app = flask.Flask(__name__)
+models.db.init_app
 
 @app.before_first_request
 def startup():

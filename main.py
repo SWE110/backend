@@ -1,9 +1,10 @@
 import json
-from flask import Flask, Response, jsonify, request, abort, g
-import dataset
 import itertools
 
-app = Flask(__name__)
+import flask
+import dataset
+
+app = flask.Flask(__name__)
 
 @app.before_first_request
 def startup():
@@ -35,7 +36,7 @@ def startup():
 def get_recipes_top_10():
     """Gets the top 10 recipes."""
     if not is_authorized():
-        return Response("{'not': 'happening'}", status=401, mimetype='application/json')
+        return flask.Response("{'not': 'happening'}", status=401, mimetype='application/json')
 
     # Can we persist the db handle? Tried to persist in Flask.g didn't seem to
     # work but could be user error
@@ -44,13 +45,13 @@ def get_recipes_top_10():
     all_results = recipes_table.all()
     # Get 10
     results_list = [r for r in itertools.islice(all_results, 10)]
-    return jsonify(results_list)
+    return flask.jsonify(results_list)
 
 @app.route("/recipe/<recipe_id>", methods=['GET'])
 def get_recipe_by_id(recipe_id):
     """Gets one recipe by its recipe id."""
     if not is_authorized():
-        return Response("{'not': 'happening'}", status=401, mimetype='application/json')
+        return flask.Response("{'not': 'happening'}", status=401, mimetype='application/json')
 
     db = dataset.connect('sqlite:///recipe.db')
     recipes_table = db['recipes']
@@ -58,24 +59,24 @@ def get_recipe_by_id(recipe_id):
     one_result_in_list = recipes_table.find(id=recipe_id)
     result = [r for r in itertools.islice(one_result_in_list, 1)][0]
     print(result)
-    return jsonify(result)
+    return flask.jsonify(result)
 
 @app.route("/recipe", methods=["POST"])
 def create_recipe():
     """Creates a recipe based on receieved parameters and adds it to the db."""
     if not is_authorized():
-        return Response("{'not': 'happening'}", status=401, mimetype='application/json')
-    if not request.is_json:
-        abort(400)
+        return flask.Response("{'not': 'happening'}", status=401, mimetype='application/json')
+    if not flask.request.is_json:
+        flask.abort(400)
     print("Creating recipe")
-    incoming_recipe = request.get_json()
+    incoming_recipe = flask.request.get_json()
 
     # For now assumes full_content
     recipe_created = add_recipe_to_db(full_content=incoming_recipe)
-    if recipe_created == False:
-        abort(500)
+    if not recipe_created:
+        flask.abort(500)
 
-    return Response("Created", status=201, mimetype='application/json')
+    return flask.Response("Created", status=201, mimetype='application/json')
 
 def add_recipe_to_db(*args, **kwargs):
     """Adds a recipe to the db."""
@@ -83,12 +84,12 @@ def add_recipe_to_db(*args, **kwargs):
     print('Adding recipe to db')
     db = dataset.connect('sqlite:///recipe.db')
     recipes_table = db['recipes']
-    
+
     if "full_content" in kwargs:
         # generate all fields as in kwargs["full_content"].
         # use this to just copy from scraped data already formatted in schema.
         r = kwargs["full_content"]
-        
+
         # I'm unsure of recipes_table.insert return value
         db_result = recipes_table.insert(dict(
             name=r['name'],
@@ -98,7 +99,7 @@ def add_recipe_to_db(*args, **kwargs):
         ))
 
         # db_result is 1 following successful insert but I don't know what it returns on fail
-        # Assuming makes an ass out of you and me        
+        # Assuming makes an ass out of you and me
         return True
     else:
         # populate user settable fields from form and auto generate the rest.

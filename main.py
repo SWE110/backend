@@ -1,35 +1,35 @@
 import json
-from flask import Flask, Response, jsonify, request, abort
+from flask import Flask, Response, jsonify, request, abort, g
 import dataset
+import itertools
 
-# How to search ingredients list in DB call? For now it's just json array. Needs to be searchable
-# And countable. Eg: My query matches 4 out of 5 ingredients for this recipe
 app = Flask(__name__)
 
 @app.before_first_request
 def startup():
     """Startup Code"""
 
-            # Prepopulate in-memory DB with sample recipes
-    db = dataset.connect('sqlite:///:memory:')
+    # Prepopulate local DB with sample recipes
+    # Will load 4 recipes in DB every time server is started
+    # Stacking up recipes in the DB every reload until manually deleted
+    db = dataset.connect('sqlite:///recipe.db')
     recipes_table = db['recipes']
 
     with open('recipes.txt') as json_data:
         recipes = json.load(json_data)
-    
+
     for r in recipes:
+        # TODO Fix this barbarian stuff
         recipes_table.insert(dict(
             name=r['name'],
-
-            # How to store a list in DB that allows for matching x out of y ingredients?
-            # Obviously this won't do it
+            # Need better format for ingredients to allow searching
             recipeIngredient=json.dumps(r['recipeIngredient']),
             recipeYield=r['recipeYield'],
-
             # Need to extract the steps. Keep steps broken up or merge them into one text file?
+            # For now steps are nested
             recipeInstructions=json.dumps(r['recipeInstructions'])
-            ))
-
+        ))
+    db.commit()
 
 @app.route("/recipe", methods=['GET'])
 def get_recipes_top_10():
@@ -37,11 +37,14 @@ def get_recipes_top_10():
     if not is_authorized():
         return Response("{'not': 'happening'}", status=401, mimetype='application/json')
 
-    recipes = []
-    for _ in range(10):
-        recipes.append(json.loads(sample_recipe))
-
-    return jsonify(recipes)
+    # Can we persist the db handle? Tried to persist in Flask.g didn't seem to
+    # work but could be user error
+    db = dataset.connect('sqlite:///recipe.db')
+    recipes_table = db['recipes']
+    all_results = recipes_table.all()
+    # Get 10
+    results_list = [r for r in itertools.islice(all_results, 10)]
+    return jsonify(results_list)
 
 @app.route("/recipe/<recipe_id>", methods=['GET'])
 def get_recipe_by_id(recipe_id):
@@ -49,11 +52,13 @@ def get_recipe_by_id(recipe_id):
     if not is_authorized():
         return Response("{'not': 'happening'}", status=401, mimetype='application/json')
 
-    db_response = get_recipe_from_db(recipe_id)
+    db = dataset.connect('sqlite:///recipe.db')
+    recipes_table = db['recipes']
 
-     # Do things
-
-    return jsonify(json.loads(sample_recipe))
+    one_result_in_list = recipes_table.find(id=recipe_id)
+    result = [r for r in itertools.islice(one_result_in_list, 1)][0]
+    print(result)
+    return jsonify(result)
 
 @app.route("/recipe", methods=["POST"])
 def create_recipe():
@@ -62,28 +67,43 @@ def create_recipe():
         return Response("{'not': 'happening'}", status=401, mimetype='application/json')
     if not request.is_json:
         abort(400)
+    print("Creating recipe")
+    incoming_recipe = request.get_json()
 
-    add_recipe_to_db(full_content=json.loads(sample_recipe))
+    # For now assumes full_content
+    recipe_created = add_recipe_to_db(full_content=incoming_recipe)
+    if recipe_created == False:
+        abort(500)
 
     return Response("Created", status=201, mimetype='application/json')
 
-def get_recipe_from_db(recipe_id):
-    """Gets a recipe from the db from the recipe id."""
-    # calls from db module here
-    return ""
-
 def add_recipe_to_db(*args, **kwargs):
     """Adds a recipe to the db."""
-    # calls from db module here
+
+    print('Adding recipe to db')
+    db = dataset.connect('sqlite:///recipe.db')
+    recipes_table = db['recipes']
+    
     if "full_content" in kwargs:
         # generate all fields as in kwargs["full_content"].
         # use this to just copy from scraped data already formatted in schema.
-        pass
+        r = kwargs["full_content"]
+        
+        # I'm unsure of recipes_table.insert return value
+        db_result = recipes_table.insert(dict(
+            name=r['name'],
+            recipeIngredient=json.dumps(r['recipeIngredient']),
+            recipeYield=r['recipeYield'],
+            recipeInstructions=json.dumps(r['recipeInstructions']),
+        ))
+
+        # db_result is 1 following successful insert but I don't know what it returns on fail
+        # Assuming makes an ass out of you and me        
+        return True
     else:
         # populate user settable fields from form and auto generate the rest.
         # e.g. no initial rating, no comments.
         pass
-    return ""
 
 def is_authorized():
     """Checks if the user is authorized."""

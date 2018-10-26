@@ -5,6 +5,8 @@ import flask
 import flask_restful
 import dataset
 
+import models
+
 class RecipeList(flask_restful.Resource):
     def get(self):
         """Gets the top 10 recipes."""
@@ -49,6 +51,17 @@ class Recipe(flask_restful.Resource):
         result = [r for r in itertools.islice(one_result_in_list, 1)][0]
         print(result)
         return result
+
+    def delete(self, recipe_id):
+        """Deletes one recipe by its recipe id."""
+        if not is_authorized():
+            return {'not': 'happening'}, 401
+
+        db = dataset.connect('sqlite:///recipe.db')
+        recipes_table = db['recipes']
+
+        db_result = recipes_table.delete(id=recipe_id)
+        return flask.Response("Deleted", status=204, mimetype='application/json')
 
 # temp stuff to check if working
 

@@ -9,7 +9,7 @@ import resources
 
 app = flask.Flask(__name__)
 api = flask_restful.Api(app)
-models.db.init_app
+models.db.init_app(app)
 
 @app.before_first_request
 def startup():

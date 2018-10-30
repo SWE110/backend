@@ -1,10 +1,12 @@
+import uuid
+
 import flask_sqlalchemy
 import sqlalchemy.dialects.postgresql
 
 db = flask_sqlalchemy.SQLAlchemy()
 
 class Recipe(db.Model):
-    id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True)
+    id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
     schema_type = db.Column(db.String(10))
     name = db.Column(db.String(255))
     image = db.Column(sqlalchemy.dialects.postgresql.ARRAY(db.Text()))
@@ -25,7 +27,7 @@ class Recipe(db.Model):
     pass
 
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
     # Add column data here. The next 2 lines as example.
         # username = db.Column(db.String(80), unique=True, nullable=False)
         # email = db.Column(db.String(120), unique=True, nullable=False)

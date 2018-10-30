@@ -8,7 +8,7 @@ import models
 import resources
 
 app = flask.Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:cap@104.248.220.214/RecipeDB'
 api = flask_restful.Api(app)
 models.db.init_app(app)
 
@@ -21,6 +21,7 @@ def startup():
     # Stacking up recipes in the DB every reload until manually deleted
     db = dataset.connect('sqlite:///recipe.db')
     recipes_table = db['recipes']
+    models.db.create_all()
 
     with open('recipes.txt') as json_data:
         recipes = json.load(json_data)

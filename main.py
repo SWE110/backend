@@ -8,6 +8,7 @@ import models
 import resources
 
 app = flask.Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///test.db'
 api = flask_restful.Api(app)
 models.db.init_app(app)
 

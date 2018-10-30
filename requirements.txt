@@ -4,7 +4,7 @@ chardet==3.0.4
 Click==7.0
 dataset==1.1.0
 Flask==1.0.2
-ItsDangerous==1.0.0
+ItsDangerous==1.1.0
 Jinja2==2.10
 Mako==1.0.7
 MarkupSafe==1.0

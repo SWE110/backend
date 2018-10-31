@@ -21,7 +21,6 @@ def startup():
     # Stacking up recipes in the DB every reload until manually deleted
     db = dataset.connect('sqlite:///recipe.db')
     recipes_table = db['recipes']
-    models.db.create_all()
 
     with open('recipes.txt') as json_data:
         recipes = json.load(json_data)
@@ -38,6 +37,38 @@ def startup():
             recipeInstructions=json.dumps(r['recipeInstructions'])
         ))
     db.commit()
+    test_set_up()
+
+def test_set_up():
+    """Inititialize some mock data for testing."""
+    models.db.create_all()
+    rec = models.Recipe(name="Hello", author="tony")
+    models.db.session.add(rec)
+    models.db.session.commit()
+
+    with open('recipes.txt') as json_data:
+        recipes = json.load(json_data)
+
+    for r in recipes:
+        add_recipe_to_db(full_content=r)
+    
+def add_recipe_to_db(**kwargs):
+    """Adds a recipe to the db."""
+
+    print('Adding recipe to db')
+
+    if "full_content" in kwargs:
+        # generate all fields as in kwargs["full_content"].
+        # use this to just copy from scraped data already formatted in schema.
+        recipe = models.map_schema_to_db(**kwargs["full_content"])
+        models.db.session.add(recipe)
+        models.db.session.commit()
+
+        return True
+    else:
+        # populate user settable fields from form and auto generate the rest.
+        # e.g. no initial rating, no comments.
+        pass
 
 api.add_resource(resources.RecipeList, "/recipe")
 api.add_resource(resources.Recipe, "/recipe/<recipe_id>")

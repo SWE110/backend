@@ -6,7 +6,7 @@ import sqlalchemy.dialects.postgresql
 db = flask_sqlalchemy.SQLAlchemy()
 
 class Recipe(db.Model):
-    id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    id = db.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     schema_type = db.Column(db.String(10))
     name = db.Column(db.String(255))
     image = db.Column(sqlalchemy.dialects.postgresql.ARRAY(db.Text()))
@@ -24,7 +24,14 @@ class Recipe(db.Model):
     
     # Add columns data here.
 
-    pass
+def map_schema_to_db(**kwargs):
+    """Generates soemthing that can be put in the db from a schema object"""
+    vals = {"name": kwargs.get("name", None),
+            "image": kwargs.get("image", []),
+            "recipe_ingredient": kwargs.get("recipeIngredient", []),
+            "recipe_instructions": [x.get("text", "") for x in kwargs.get("recipeInstructions", [])],
+            }
+    return Recipe(**vals)
 
 class User(db.Model):
     id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)

@@ -7,8 +7,8 @@ import sqlalchemy.dialects.postgresql
 db = flask_sqlalchemy.SQLAlchemy()
 
 class Recipe(db.Model):
-    id = db.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = db.Column(db.String(255))
+    meal_id = db.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    meal_name = db.Column(db.String(255))
     image = db.Column(sqlalchemy.dialects.postgresql.ARRAY(db.Text()))
     aggregate_rating = db.Column(db.Float)
     author = db.Column(db.String(255))
@@ -42,9 +42,32 @@ def map_schema_to_db(**kwargs):
     return Recipe(**vals)
 
 class User(db.Model):
-    id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
-    # Add column data here. The next 2 lines as example.
-        # username = db.Column(db.String(80), unique=True, nullable=False)
-        # email = db.Column(db.String(120), unique=True, nullable=False)
+    user_id = db.Column(db.String(255), primary_key=True, nullable=False)
+    user_email = db.Column(db.String(255), unique=True, nullable=False)
+    user_password = db.Column(db.String(255), nullable=False)
+    user_first_name = db.Column(db.String(255), nullable=False)
+    user_last_name = db.Column(db.String(255), nullable=False)
+    security_question = db.Column(db.text(), nullable=False)
+    security_answer = db.Column(db.text(), nullable=False)
 
-    pass
+class Inventory(db.Model):
+    inventory_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(db.String(255), ForeignKey("user.user_id"))
+    user_ingredients = db.Column(db.Text())
+
+class SavedRecipe(db.Model):
+    saved_recipe_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(db.String(255), ForeignKey("user.user_id"))
+    meal_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), ForeignKey("recipe.meal_id"), default=uuid.uuid4)
+
+class Comment(db.Model):
+    comment_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(db.String(255), ForeignKey("user.user_id"))
+    meal_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), ForeignKey("recipe.meal_id"), default=uuid.uuid4)
+    user_comment = db.Column(db.text())
+
+class Report(db.Model):
+    report_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(db.String(255), ForeignKey("user.user_id"))
+    meal_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), ForeignKey("recipe.meal_id"), default=uuid.uuid4)
+    user_report = db.Column(db.text())

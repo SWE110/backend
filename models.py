@@ -1,4 +1,5 @@
 import uuid
+import datetime
 
 import flask_sqlalchemy
 import sqlalchemy.dialects.postgresql
@@ -12,7 +13,7 @@ class Recipe(db.Model):
     image = db.Column(sqlalchemy.dialects.postgresql.ARRAY(db.Text()))
     aggregate_rating = db.Column(db.Float)
     author = db.Column(db.String(255))
-    date_published = db.Column(db.Date) # needs conversion from string?
+    date_published = db.Column(db.Date, default=datetime.date.today) # needs conversion from string?
     description = db.Column(db.Text())
     keywords = db.Column(db.Text())
     recipe_category = db.Column(db.Text())
@@ -28,8 +29,8 @@ def map_schema_to_db(**kwargs):
     """Generates soemthing that can be put in the db from a schema object"""
     vals = {"name": kwargs.get("name", None),
             "image": kwargs.get("image", []),
-            "aggregate_ating": kwargs.get("aggregateRating", None),
-            "author": kwargs.get("author", None),
+            "aggregate_rating": kwargs.get("aggregateRating", {}).get("ratingValue", None),
+            "author": kwargs.get("author", {}).get("name", None),
             "description": kwargs.get("description", None),
             "keywords": kwargs.get("keywords", []),
             "recipe_category": kwargs.get("recipeCategory", None),

@@ -42,9 +42,6 @@ def startup():
 def test_set_up():
     """Inititialize some mock data for testing."""
     models.db.create_all()
-    rec = models.Recipe(name="Hello", author="tony")
-    models.db.session.add(rec)
-    models.db.session.commit()
 
     with open('recipes.txt') as json_data:
         recipes = json.load(json_data)

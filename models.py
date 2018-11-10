@@ -21,15 +21,23 @@ class Recipe(db.Model):
     recipe_instructions = db.Column(sqlalchemy.dialects.postgresql.ARRAY(db.Text()))
     recipe_yield = db.Column(db.String(255))
     total_time = db.Column(db.Interval()) # needs conversion from string?
-    
+
     # Add columns data here.
 
 def map_schema_to_db(**kwargs):
     """Generates soemthing that can be put in the db from a schema object"""
     vals = {"name": kwargs.get("name", None),
             "image": kwargs.get("image", []),
+            "aggregate_ating": kwargs.get("aggregateRating", None),
+            "author": kwargs.get("author", None),
+            "description": kwargs.get("description", None),
+            "keywords": kwargs.get("keywords", []),
+            "recipe_category": kwargs.get("recipeCategory", None),
+            "recipe_cuisine": kwargs.get("recipeCuisine", None),
             "recipe_ingredient": kwargs.get("recipeIngredient", []),
             "recipe_instructions": [x.get("text", "") for x in kwargs.get("recipeInstructions", [])],
+            "recipe_yield": kwargs.get("recipeYield", None),
+            "total_time": kwargs.get("totalTime", None),
             }
     return Recipe(**vals)
 

@@ -8,7 +8,6 @@ db = flask_sqlalchemy.SQLAlchemy()
 
 class Recipe(db.Model):
     id = db.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    schema_type = db.Column(db.String(10))
     name = db.Column(db.String(255))
     image = db.Column(sqlalchemy.dialects.postgresql.ARRAY(db.Text()))
     aggregate_rating = db.Column(db.Float)

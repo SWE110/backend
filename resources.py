@@ -1,9 +1,7 @@
-import itertools
 import json
 
 import flask
 import flask_restful
-import dataset
 
 import models
 
@@ -13,14 +11,7 @@ class RecipeList(flask_restful.Resource):
         if not is_authorized():
             return {'not': 'happening'}, 401
 
-        # Can we persist the db handle? Tried to persist in Flask.g didn't seem to
-        # work but could be user error
-        db = dataset.connect('sqlite:///recipe.db')
-        recipes_table = db['recipes']
-        all_results = recipes_table.all()
-        # Get 10
-        results_list = [r for r in itertools.islice(all_results, 10)]
-        return results_list
+        return [recipe.map_db_to_dict() for recipe in models.Recipe.query.all()[:10]]
 
     def post(self):
         """Creates a recipe based on receieved parameters and adds it to the db."""
@@ -44,54 +35,42 @@ class Recipe(flask_restful.Resource):
         if not is_authorized():
             return {'not': 'happening'}, 401
 
-        db = dataset.connect('sqlite:///recipe.db')
-        recipes_table = db['recipes']
-
-        one_result_in_list = recipes_table.find(id=recipe_id)
-        result = [r for r in itertools.islice(one_result_in_list, 1)][0]
-        print(result)
-        return result
+        return models.Recipe.query.filter_by(meal_id=recipe_id).first().map_db_to_dict()
 
     def delete(self, recipe_id):
         """Deletes one recipe by its recipe id."""
         if not is_authorized():
             return {'not': 'happening'}, 401
 
-        db = dataset.connect('sqlite:///recipe.db')
-        recipes_table = db['recipes']
-
-        db_result = recipes_table.delete(id=recipe_id)
+        delete_Recipe_from_db(recipe_id)
         return flask.Response("Deleted", status=204, mimetype='application/json')
 
 # temp stuff to check if working
 
-def add_recipe_to_db(*args, **kwargs):
+def add_recipe_to_db(**kwargs):
     """Adds a recipe to the db."""
-
-    print('Adding recipe to db')
-    db = dataset.connect('sqlite:///recipe.db')
-    recipes_table = db['recipes']
 
     if "full_content" in kwargs:
         # generate all fields as in kwargs["full_content"].
         # use this to just copy from scraped data already formatted in schema.
-        r = kwargs["full_content"]
+        recipe = models.map_schema_to_db(**kwargs["full_content"])
+        models.db.session.add(recipe)
+        models.db.session.commit()
 
-        # I'm unsure of recipes_table.insert return value
-        db_result = recipes_table.insert(dict(
-            name=r['name'],
-            recipeIngredient=json.dumps(r['recipeIngredient']),
-            recipeYield=r['recipeYield'],
-            recipeInstructions=json.dumps(r['recipeInstructions']),
-        ))
-
-        # db_result is 1 following successful insert but I don't know what it returns on fail
-        # Assuming makes an ass out of you and me
         return True
     else:
         # populate user settable fields from form and auto generate the rest.
         # e.g. no initial rating, no comments.
         pass
+
+def delete_recipe_from_db(recipe_id):
+    """Deletes a recipe from the db."""
+    
+    recipes = models.Recipe.query.filter_by(meal_id=receipe_id)
+    for recipe in recipes:
+        db.session.delete(recipe)
+
+    db.session.commit()
 
 def is_authorized():
     """Checks if the user is authorized."""

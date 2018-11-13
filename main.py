@@ -1,7 +1,6 @@
 import json
 
 import flask
-import dataset
 import flask_restful
 
 import models
@@ -16,27 +15,6 @@ models.db.init_app(app)
 def startup():
     """Startup Code"""
 
-    # Prepopulate local DB with sample recipes
-    # Will load 4 recipes in DB every time server is started
-    # Stacking up recipes in the DB every reload until manually deleted
-    db = dataset.connect('sqlite:///recipe.db')
-    recipes_table = db['recipes']
-
-    with open('recipes.txt') as json_data:
-        recipes = json.load(json_data)
-
-    for r in recipes:
-        # TODO Fix this barbarian stuff
-        recipes_table.insert(dict(
-            name=r['name'],
-            # Need better format for ingredients to allow searching
-            recipeIngredient=json.dumps(r['recipeIngredient']),
-            recipeYield=r['recipeYield'],
-            # Need to extract the steps. Keep steps broken up or merge them into one text file?
-            # For now steps are nested
-            recipeInstructions=json.dumps(r['recipeInstructions'])
-        ))
-    db.commit()
     test_set_up()
 
 def test_set_up():
@@ -47,25 +25,7 @@ def test_set_up():
         recipes = json.load(json_data)
 
     for r in recipes:
-        add_recipe_to_db(full_content=r)
-    
-def add_recipe_to_db(**kwargs):
-    """Adds a recipe to the db."""
-
-    print('Adding recipe to db')
-
-    if "full_content" in kwargs:
-        # generate all fields as in kwargs["full_content"].
-        # use this to just copy from scraped data already formatted in schema.
-        recipe = models.map_schema_to_db(**kwargs["full_content"])
-        models.db.session.add(recipe)
-        models.db.session.commit()
-
-        return True
-    else:
-        # populate user settable fields from form and auto generate the rest.
-        # e.g. no initial rating, no comments.
-        pass
+        resources.add_recipe_to_db(full_content=r)
 
 api.add_resource(resources.RecipeList, "/recipe")
 api.add_resource(resources.Recipe, "/recipe/<recipe_id>")

@@ -23,11 +23,11 @@ class RecipeList(flask_restful.Resource):
         incoming_recipe = flask.request.get_json()
 
         # For now assumes full_content
-        recipe_created = add_recipe_to_db(full_content=incoming_recipe)
-        if not recipe_created:
+        recipe_id = add_recipe_to_db(full_content=incoming_recipe)
+        if not recipe_id:
             flask_restful.abort(500, message="Create failed.")
 
-        return flask.Response("Created", status=201, mimetype='application/json')
+        return flask.Response(recipe_id, status=201, mimetype='application/json')
 
 class Recipe(flask_restful.Resource):
     def get(self, recipe_id):
@@ -42,7 +42,7 @@ class Recipe(flask_restful.Resource):
         if not is_authorized():
             return {'not': 'happening'}, 401
 
-        delete_Recipe_from_db(recipe_id)
+        delete_recipe_from_db(recipe_id)
         return flask.Response("Deleted", status=204, mimetype='application/json')
 
 # temp stuff to check if working
@@ -57,7 +57,7 @@ def add_recipe_to_db(**kwargs):
         models.db.session.add(recipe)
         models.db.session.commit()
 
-        return True
+        return recipe.meal_id.hex
     else:
         # populate user settable fields from form and auto generate the rest.
         # e.g. no initial rating, no comments.
@@ -66,11 +66,11 @@ def add_recipe_to_db(**kwargs):
 def delete_recipe_from_db(recipe_id):
     """Deletes a recipe from the db."""
     
-    recipes = models.Recipe.query.filter_by(meal_id=receipe_id)
+    recipes = models.Recipe.query.filter_by(meal_id=recipe_id)
     for recipe in recipes:
-        db.session.delete(recipe)
+        models.db.session.delete(recipe)
 
-    db.session.commit()
+    models.db.session.commit()
 
 def is_authorized():
     """Checks if the user is authorized."""

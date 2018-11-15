@@ -1,5 +1,3 @@
-import json
-
 import flask
 import flask_restful
 
@@ -49,28 +47,26 @@ class Recipe(flask_restful.Resource):
 
 def add_recipe_to_db(**kwargs):
     """Adds a recipe to the db."""
-
     if "full_content" in kwargs:
         # generate all fields as in kwargs["full_content"].
         # use this to just copy from scraped data already formatted in schema.
         recipe = models.map_schema_to_db(**kwargs["full_content"])
-        models.db.session.add(recipe)
-        models.db.session.commit()
+        models.DB.session.add(recipe)
+        models.DB.session.commit()
 
         return recipe.meal_id.hex
     else:
         # populate user settable fields from form and auto generate the rest.
         # e.g. no initial rating, no comments.
-        pass
+        return None
 
 def delete_recipe_from_db(recipe_id):
     """Deletes a recipe from the db."""
-    
     recipes = models.Recipe.query.filter_by(meal_id=recipe_id)
     for recipe in recipes:
-        models.db.session.delete(recipe)
+        models.DB.session.delete(recipe)
 
-    models.db.session.commit()
+    models.DB.session.commit()
 
 def is_authorized():
     """Checks if the user is authorized."""

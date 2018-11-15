@@ -4,23 +4,23 @@ import datetime
 import flask_sqlalchemy
 import sqlalchemy.dialects.postgresql
 
-db = flask_sqlalchemy.SQLAlchemy()
+DB = flask_sqlalchemy.SQLAlchemy()
 
-class Recipe(db.Model):
-    meal_id = db.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    meal_name = db.Column(db.String(255))
-    image = db.Column(sqlalchemy.dialects.postgresql.ARRAY(db.Text()))
-    aggregate_rating = db.Column(db.Float)
-    author = db.Column(db.String(255))
-    date_published = db.Column(db.Date, default=datetime.date.today)
-    description = db.Column(db.Text())
-    keywords = db.Column(db.Text())
-    recipe_category = db.Column(db.Text())
-    recipe_cuisine = db.Column(db.String(255))
-    recipe_ingredient = db.Column(sqlalchemy.dialects.postgresql.ARRAY(db.Text()))
-    recipe_instructions = db.Column(sqlalchemy.dialects.postgresql.ARRAY(db.Text()))
-    recipe_yield = db.Column(db.String(255))
-    total_time = db.Column(db.Interval())
+class Recipe(DB.Model):
+    meal_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    meal_name = DB.Column(DB.String(255))
+    image = DB.Column(sqlalchemy.dialects.postgresql.ARRAY(DB.Text()))
+    aggregate_rating = DB.Column(DB.Float)
+    author = DB.Column(DB.String(255))
+    date_published = DB.Column(DB.Date, default=datetime.date.today)
+    description = DB.Column(DB.Text())
+    keywords = DB.Column(DB.Text())
+    recipe_category = DB.Column(DB.Text())
+    recipe_cuisine = DB.Column(DB.String(255))
+    recipe_ingredient = DB.Column(sqlalchemy.dialects.postgresql.ARRAY(DB.Text()))
+    recipe_instructions = DB.Column(sqlalchemy.dialects.postgresql.ARRAY(DB.Text()))
+    recipe_yield = DB.Column(DB.String(255))
+    total_time = DB.Column(DB.Interval())
 
     def map_db_to_dict(self):
         """Returns a dictionary representation of this object that can be jsonified."""
@@ -38,7 +38,7 @@ class Recipe(db.Model):
                 "recipe_instructions": self.recipe_instructions,
                 "recipe_yield": self.recipe_yield,
                 "total_time": self.total_time.total_seconds(),
-                }
+               }
 
 def map_schema_to_db(**kwargs):
     """Generates soemthing that can be put in the db from a schema object"""
@@ -54,36 +54,36 @@ def map_schema_to_db(**kwargs):
             "recipe_instructions": [x.get("text", "") for x in kwargs.get("recipeInstructions", [])],
             "recipe_yield": kwargs.get("recipeYield", None),
             "total_time": kwargs.get("totalTime", None),
-            }
+           }
     return Recipe(**vals)
 
-class User(db.Model):
-    user_id = db.Column(db.String(255), primary_key=True, nullable=False)
-    user_email = db.Column(db.String(255), unique=True, nullable=False)
-    user_password = db.Column(db.String(255), nullable=False)
-    user_first_name = db.Column(db.String(255), nullable=False)
-    user_last_name = db.Column(db.String(255), nullable=False)
-    security_question = db.Column(db.Text(), nullable=False)
-    security_answer = db.Column(db.Text(), nullable=False)
+class User(DB.Model):
+    user_id = DB.Column(DB.String(255), primary_key=True, nullable=False)
+    user_email = DB.Column(DB.String(255), unique=True, nullable=False)
+    user_password = DB.Column(DB.String(255), nullable=False)
+    user_first_name = DB.Column(DB.String(255), nullable=False)
+    user_last_name = DB.Column(DB.String(255), nullable=False)
+    security_question = DB.Column(DB.Text(), nullable=False)
+    security_answer = DB.Column(DB.Text(), nullable=False)
 
-class Inventory(db.Model):
-    inventory_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(db.String(255), db.ForeignKey("user.user_id"))
-    user_ingredients = db.Column(db.Text())
+class Inventory(DB.Model):
+    inventory_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = DB.Column(DB.String(255), DB.ForeignKey("user.user_id"))
+    user_ingredients = DB.Column(DB.Text())
 
-class SavedRecipe(db.Model):
-    saved_recipe_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(db.String(255), db.ForeignKey("user.user_id"))
-    meal_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), db.ForeignKey("recipe.meal_id"), default=uuid.uuid4)
+class SavedRecipe(DB.Model):
+    saved_recipe_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = DB.Column(DB.String(255), DB.ForeignKey("user.user_id"))
+    meal_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), DB.ForeignKey("recipe.meal_id"), default=uuid.uuid4)
 
-class Comment(db.Model):
-    comment_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(db.String(255), db.ForeignKey("user.user_id"))
-    meal_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), db.ForeignKey("recipe.meal_id"), default=uuid.uuid4)
-    user_comment = db.Column(db.Text())
+class Comment(DB.Model):
+    comment_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = DB.Column(DB.String(255), DB.ForeignKey("user.user_id"))
+    meal_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), DB.ForeignKey("recipe.meal_id"), default=uuid.uuid4)
+    user_comment = DB.Column(DB.Text())
 
-class Report(db.Model):
-    report_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(db.String(255), db.ForeignKey("user.user_id"))
-    meal_id = db.Column(sqlalchemy.dialects.postgresql.UUID(), db.ForeignKey("recipe.meal_id"), default=uuid.uuid4)
-    user_report = db.Column(db.Text())
+class Report(DB.Model):
+    report_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = DB.Column(DB.String(255), DB.ForeignKey("user.user_id"))
+    meal_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), DB.ForeignKey("recipe.meal_id"), default=uuid.uuid4)
+    user_report = DB.Column(DB.Text())

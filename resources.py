@@ -43,8 +43,6 @@ class Recipe(flask_restful.Resource):
         delete_recipe_from_db(recipe_id)
         return flask.Response("Deleted", status=204, mimetype='application/json')
 
-# temp stuff to check if working
-
 def add_recipe_to_db(**kwargs):
     """Adds a recipe to the db."""
     if "full_content" in kwargs:

@@ -1,3 +1,5 @@
+import uuid
+
 import flask
 import flask_restful
 
@@ -43,6 +45,36 @@ class Recipe(flask_restful.Resource):
         delete_recipe_from_db(recipe_id)
         return flask.Response("Deleted", status=204, mimetype='application/json')
 
+class Search(flask_restful.Resource):
+    def get(self):
+        """Returns recipes based on search id provided"""
+        try:
+            search_id = uuid.UUID(flask.request.args.get("id", ""))
+        except ValueError:
+            flask_restful.abort(400, message="Invalid search id.")
+
+        search = models.Search.query.get(search_id)
+        if not search:
+            flask_restful.abort(400, message="Invalid search id.")
+
+        return do_search(search.search_params)
+
+    def post(self):
+        """Creates a search object if it does not alreayd exist in the database"""
+        if not flask.request.is_json:
+            flask_restful.abort(400, message="Not formatted as json.")
+
+        return do_search(flask.request.get_json())
+
+        # search_id = uuid.uuid5(models.NAMESPACE_SEARCH, flask.request.data)
+        # if models.Search.query.get(search_id) is None:
+            # search_params = flask.request.get_json()
+            # models.DB.session.add(models.Search(search_id=search_id, search_params=search_params))
+            # models.DB.session.commit()
+            # # maybe do some preprocessing that makes search easier
+
+        # flask.redirect(flask.url_for(Search.get, id=search_id), code=307)
+
 def add_recipe_to_db(**kwargs):
     """Adds a recipe to the db."""
     if "full_content" in kwargs:
@@ -65,6 +97,21 @@ def delete_recipe_from_db(recipe_id):
         models.DB.session.delete(recipe)
 
     models.DB.session.commit()
+
+def do_search(search_params):
+    """Searches db based on parameters"""
+    query_filters = []
+    if "title" in search_params:
+        query_filters.append(models.Recipe.meal_name.contains(search_params['title']))
+    if "restrictive" in search_params:
+        query_filters.append(models.Recipe.recipe_ingredient.contained_by(search_params['restrictive']))
+    if "inclusive" in search_params:
+        query_filters.append(models.Recipe.recipe_ingredient.overlap(search_params['inclusive']))
+    if "rejective" in search_params:
+        query_filters.append(~(models.Recipe.recipe_ingredient.overlap(search_params['rejective'])))
+
+    recipes = models.Recipe.query.filter(*query_filters).all()
+    return [r.map_db_to_dict() for r in recipes]
 
 def is_authorized():
     """Checks if the user is authorized."""

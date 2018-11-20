@@ -30,4 +30,4 @@ api.add_resource(resources.RecipeList, "/recipe")
 api.add_resource(resources.Recipe, "/recipe/<recipe_id>")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=6666)
+    app.run(host='0.0.0.0', debug=True, port=3000)

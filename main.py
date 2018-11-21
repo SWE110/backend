@@ -6,7 +6,14 @@ import flask_restful
 import models
 import resources
 
+from flask_cors import CORS
+
 app = flask.Flask(__name__)
+
+#Add CORS to allow requests from react app
+CORS(app)
+
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:cap@104.248.220.214/RecipeDB'
 api = flask_restful.Api(app)
 models.DB.init_app(app)

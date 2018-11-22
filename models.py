@@ -14,7 +14,7 @@ class Recipe(DB.Model):
     author = DB.Column(DB.String(255))
     date_published = DB.Column(DB.Date, default=datetime.date.today)
     description = DB.Column(DB.Text())
-    keywords = DB.Column(DB.Text())
+    keywords = DB.Column(sqlalchemy.dialects.postgresql.ARRAY(DB.Text()))
     recipe_category = DB.Column(DB.Text())
     recipe_cuisine = DB.Column(DB.String(255))
     recipe_ingredient = DB.Column(sqlalchemy.dialects.postgresql.ARRAY(DB.Text()))
@@ -42,12 +42,18 @@ class Recipe(DB.Model):
 
 def map_schema_to_db(**kwargs):
     """Generates soemthing that can be put in the db from a schema object"""
+   
+    #keywords to array
+    keywords = kwargs.get("keywords",[])
+    keywords = keywords.split(",")
+    keywords = [s.strip() for s in keywords]
+
     vals = {"meal_name": kwargs.get("name", None),
             "image": kwargs.get("image", []),
             "aggregate_rating": kwargs.get("aggregateRating", {}).get("ratingValue", None),
             "author": kwargs.get("author", {}).get("name", None),
             "description": kwargs.get("description", None),
-            "keywords": kwargs.get("keywords", []),
+            "keywords": keywords,
             "recipe_category": kwargs.get("recipeCategory", None),
             "recipe_cuisine": kwargs.get("recipeCuisine", None),
             "recipe_ingredient": kwargs.get("recipeIngredient", []),

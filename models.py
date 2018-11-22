@@ -4,6 +4,8 @@ import datetime
 import flask_sqlalchemy
 import sqlalchemy.dialects.postgresql
 
+NAMESPACE_SEARCH = uuid.UUID("0cedf00c175348f4bc102ff7e4ffae5c")
+
 DB = flask_sqlalchemy.SQLAlchemy()
 
 class Recipe(DB.Model):
@@ -71,6 +73,11 @@ class User(DB.Model):
     user_last_name = DB.Column(DB.String(255), nullable=False)
     security_question = DB.Column(DB.Text(), nullable=False)
     security_answer = DB.Column(DB.Text(), nullable=False)
+
+class Search(DB.Model):
+    search_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, nullable=False)
+    search_params = DB.Column(DB.PickleType, nullable=False)
+    # Update columns as needed to be more efficient. Right now search just stores the pickled dictionary of search options
 
 class Inventory(DB.Model):
     inventory_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)

@@ -35,6 +35,7 @@ def test_set_up():
 
 api.add_resource(resources.RecipeList, "/recipe")
 api.add_resource(resources.Recipe, "/recipe/<recipe_id>")
+api.add_resource(resources.Search, "/search")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=3000)

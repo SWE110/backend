@@ -46,6 +46,8 @@ class Recipe(flask_restful.Resource):
         return flask.Response("Deleted", status=204, mimetype='application/json')
 
 class Search(flask_restful.Resource):
+    def options(self):
+        pass
     def get(self):
         """Returns recipes based on search id provided"""
         try:

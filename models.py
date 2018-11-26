@@ -74,6 +74,13 @@ class User(DB.Model):
     security_question = DB.Column(DB.Text(), nullable=False)
     security_answer = DB.Column(DB.Text(), nullable=False)
 
+    def verify_password(self, password):
+        if password == self.user_password:
+            return True
+        else:
+            return False
+
+
 class Search(DB.Model):
     search_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, nullable=False)
     search_params = DB.Column(DB.PickleType, nullable=False)

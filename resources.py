@@ -1,9 +1,50 @@
 import uuid
 
 import flask
+from flask import g
 import flask_restful
-
 import models
+from flask_httpauth import HTTPBasicAuth
+
+auth = HTTPBasicAuth()
+
+@auth.verify_password
+def verify_password(username, password):
+    user = models.User.query.filter_by(user_id = username).first()
+    if not user or not user.verify_password(password):
+        return False
+    g.user = user
+    return True
+
+class TestAuth(flask_restful.Resource):
+    @auth.login_required
+    def get(self):
+        return "You are authorized!"
+
+class CreateUser(flask_restful.Resource):
+    ##### Passwords should be posted in some hash agreeable by both front and backend. Recommend md5, we aren't a bank.
+    def post(self):
+        if not flask.request.is_json:
+            flask_restful.abort(400, message="Not formatted as json.")
+       
+        username = flask.request.json.get('username')
+        email = flask.request.json.get('email')
+        password = flask.request.json.get('password')
+        firstname = flask.request.json.get('firstname')
+        lastname = flask.request.json.get('lastname')
+        question = flask.request.json.get('question')
+        answer = flask.request.json.get('answer')
+
+        if username is None or password is None or email is None or firstname is None or lastname is None or question is None or answer is None:
+            flask_restful.abort(400, message="Must enter username, password, and email")
+        if models.User.query.filter_by(user_id = username).first() is not None:
+            flask_restful.abort(400, message="Username already exists")
+        if models.User.query.filter_by(user_email = email).first() is not None:
+            flask_restful.abort(400, message="User email already exists")
+        newuser = models.User(user_id = username, user_email = email, user_password = password, user_first_name = firstname, user_last_name = lastname, security_question = question, security_answer = answer)
+        models.DB.session.add(newuser)
+        models.DB.session.commit()
+    # returns http 200 on success
 
 class RecipeList(flask_restful.Resource):
     def get(self):

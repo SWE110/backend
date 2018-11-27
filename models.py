@@ -39,7 +39,7 @@ class Recipe(DB.Model):
                 "recipe_ingredient": self.recipe_ingredient,
                 "recipe_instructions": self.recipe_instructions,
                 "recipe_yield": self.recipe_yield,
-                "total_time": self.total_time.total_seconds(),
+                "total_time": None if self.total_time is None else self.total_time.total_seconds(),
                }
 
 def map_schema_to_db(**kwargs):

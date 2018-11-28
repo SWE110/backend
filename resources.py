@@ -52,7 +52,10 @@ class RecipeList(flask_restful.Resource):
         if not is_authorized():
             return {'not': 'happening'}, 401
 
-        return [recipe.map_db_to_dict() for recipe in models.Recipe.query.all()[:10]]
+        start = int(flask.request.args.get("start", "0"))
+        count = int(flask.request.args.get("start", "20"))
+
+        return [recipe.map_db_to_dict() for recipe in models.Recipe.query.slice(start, start + count).all()]
 
     def post(self):
         """Creates a recipe based on receieved parameters and adds it to the db."""
@@ -143,6 +146,8 @@ def delete_recipe_from_db(recipe_id):
 
 def do_search(search_params):
     """Searches db based on parameters"""
+    start = int(search_params.get("start", "0")) # move to get request when possible
+    count = int(search_params.get("count", "20")) # move to get request when possible
     query_filters = []
     if "title" in search_params:
         query_filters.append(models.Recipe.meal_name.contains(search_params['title']))
@@ -153,7 +158,7 @@ def do_search(search_params):
     if "rejective" in search_params:
         query_filters.append(~(models.Recipe.recipe_ingredient.overlap(search_params['rejective'])))
 
-    recipes = models.Recipe.query.filter(*query_filters).all()
+    recipes = models.Recipe.query.filter(*query_filters).slice(start, start + count).all()
     return [r.map_db_to_dict() for r in recipes]
 
 def is_authorized():

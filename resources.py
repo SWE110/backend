@@ -158,7 +158,7 @@ def do_search(search_params):
     if "rejective" in search_params:
         query_filters.append(~(models.Recipe.recipe_ingredient.overlap(search_params['rejective'])))
 
-    return [recipe.map_db_to_dict() for recipe in recipes = models.Recipe.query.filter(*query_filters).slice(start, start + count).all()]
+    return [recipe.map_db_to_dict() for recipe in models.Recipe.query.filter(*query_filters).slice(start, start + count).all()]
 
 def is_authorized():
     """Checks if the user is authorized."""

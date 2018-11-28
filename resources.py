@@ -146,8 +146,15 @@ def delete_recipe_from_db(recipe_id):
 
 def do_search(search_params):
     """Searches db based on parameters"""
+    order_options = {
+                     "meal_id": models.Recipe.meal_id.asc(),
+                     "aggregate_rating": -models.Recipe.aggregate_rating.asc(),
+                     "total_time": models.Recipe.total_time.asc()
+                    }
+
     start = int(search_params.get("start", "0")) # move to get request when possible
     count = int(search_params.get("count", "20")) # move to get request when possible
+
     query_filters = []
     if "title" in search_params:
         query_filters.append(models.Recipe.meal_name.contains(search_params['title']))
@@ -158,7 +165,9 @@ def do_search(search_params):
     if "rejective" in search_params:
         query_filters.append(~(models.Recipe.recipe_ingredient.overlap(search_params['rejective'])))
 
-    return [recipe.map_db_to_dict() for recipe in models.Recipe.query.filter(*query_filters).slice(start, start + count).all()]
+    order = order_options.get(search_params.get("order", ""), models.Recipe.meal_id.asc())
+
+    return [recipe.map_db_to_dict() for recipe in models.Recipe.query.filter(*query_filters).order_by(order).slice(start, start + count).all()]
 
 def is_authorized():
     """Checks if the user is authorized."""

@@ -145,9 +145,10 @@ def do_search(search_params):
     """Searches db based on parameters"""
     query_filters = []
     if "title" in search_params:
-        query_filters.append(models.Recipe.meal_name.contains(search_params['title']))
+        query_filters.append(models.DB.func.lower(models.Recipe.meal_name).contains(search_params['title'].lower()))
     if "restrictive" in search_params:
-        query_filters.append(models.Recipe.recipe_ingredient.contained_by(search_params['restrictive']))
+        # query_filters.append(models.Recipe.recipe_ingredient.all_().like(models.DB.any_(search_params['restrictive'])))
+        query_filters.append(models.db.func.bool_and(models.DB.func.unnest(models.Recipe.recipe_ingredient).like("%pizza%")))
     if "inclusive" in search_params:
         query_filters.append(models.Recipe.recipe_ingredient.overlap(search_params['inclusive']))
     if "rejective" in search_params:

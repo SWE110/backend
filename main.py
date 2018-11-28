@@ -23,12 +23,6 @@ def test_set_up():
     """Inititialize some mock data for testing."""
     models.DB.create_all()
 
-    with open('recipes.txt') as json_data:
-        recipes = json.load(json_data)
-
-    for recipe in recipes:
-        resources.add_recipe_to_db(full_content=recipe)
-
 api.add_resource(resources.RecipeList, "/recipe")
 api.add_resource(resources.Recipe, "/recipe/<recipe_id>")
 api.add_resource(resources.Search, "/search")

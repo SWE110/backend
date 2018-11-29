@@ -1,10 +1,12 @@
 import uuid
 
 import flask
-from flask import g
+from flask import g, current_app
 import flask_restful
-import models
 from flask_httpauth import HTTPBasicAuth
+
+import models
+import crawler
 
 auth = HTTPBasicAuth()
 
@@ -121,6 +123,15 @@ class Search(flask_restful.Resource):
 
         # flask.redirect(flask.url_for(Search.get, id=search_id), code=307)
 
+class Crawl(flask_restful.Resource):
+    def post(self):
+        """Starts a crawler"""
+        if not flask.request.is_json:
+            flask_restful.abort(400, message="Not formatted as json.")
+
+        return do_crawl(flask.request.get_json())
+        
+
 def add_recipe_to_db(**kwargs):
     """Adds a recipe to the db."""
     if "full_content" in kwargs:
@@ -168,6 +179,16 @@ def do_search(search_params):
     order = order_options.get(search_params.get("order", ""), models.Recipe.meal_id.asc())
 
     return [recipe.map_db_to_dict() for recipe in models.Recipe.query.filter(*query_filters).order_by(order).slice(start, start + count).all()]
+
+def do_crawl(crawler_params):
+    """Starts and runs a crawler"""
+    def crawler_callback(recipe, app):
+        with app.app_context():
+            add_recipe_to_db(full_content=recipe)
+    crawler_params["recipe_callback"] = crawler_callback
+    crawler_params["recipe_callback_args"] = (current_app._get_current_object(),)
+    crawler_params["recipe_callback_kwargs"] = {}
+    crawler.Crawler(**crawler_params)
 
 def is_authorized():
     """Checks if the user is authorized."""

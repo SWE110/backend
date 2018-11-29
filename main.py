@@ -26,6 +26,7 @@ def test_set_up():
 api.add_resource(resources.RecipeList, "/recipe")
 api.add_resource(resources.Recipe, "/recipe/<recipe_id>")
 api.add_resource(resources.Search, "/search")
+api.add_resource(resources.Crawl, "/crawl")
 api.add_resource(resources.CreateUser, "/user/create")
 api.add_resource(resources.TestAuth, "/testauth")
 

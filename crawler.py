@@ -53,15 +53,19 @@ class Crawler(threading.Thread):
             return False
         self.v_print("Full url: {}".format(self.base_url + page_name))
 
-        recipes = get_recipes_from_url(self.base_url + page_name)
-        self.v_print("Found {} recipes for a total of {} recipes".format(len(recipes), len(self.recipes)))
-        self.recipes += recipes
-        if self.recipe_callback is not None:
-            # Runs the recipe callback with args for each recipe found
-            for recipe in recipes:
-                self.recipe_callback(recipe, *(self.recipe_callback_args), **(self.recipe_callback_kwargs))
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'}
+        soup = bs4.BeautifulSoup(requests.get(self.base_url + page_name, headers=headers).text, "html.parser")
 
-        links = get_links_from_url(self.base_url + page_name)
+        recipes = get_recipes_from_soup(soup)
+        for recipe in recipes:
+            if recipe not in self.recipes:
+                self.recipes.append(recipe)
+                self.v_print("Found a new recipe for a total of {} recipes".format(len(self.recipes)))
+                if self.recipe_callback is not None:
+                    # Runs the recipe callback with args for each recipe found
+                    self.recipe_callback(recipe, *(self.recipe_callback_args), **(self.recipe_callback_kwargs))
+
+        links = get_links_from_soup(soup)
         # Filters out links not from the base_url
         allowed_links = [link for link in links if link[:len(self.base_url)] == self.base_url]
         for link in allowed_links:
@@ -70,6 +74,7 @@ class Crawler(threading.Thread):
             if page not in self.pages_seen:
                 self.pages_to_crawl.put(page)
                 self.pages_seen.add(page)
+        # print(len(self.pages_seen))
         return True
 
     def get_recipes(self):
@@ -81,18 +86,14 @@ class Crawler(threading.Thread):
         if self.verbose:
             print(string)
 
-def get_links_from_url(url):
-    """Returns a list of links from the url"""
-    page = requests.get(url)
-    soup = bs4.BeautifulSoup(page.text, "html.parser")
+def get_links_from_soup(soup):
+    """Returns a list of links from soup object"""
     # Gets all "a" tags with "href" attribute
     link_tag_list = soup.find_all("a", href=True)
     return [link_tag["href"] for link_tag in link_tag_list]
 
-def get_recipes_from_url(url):
-    """Returns a list of recipe objects following Google's schema"""
-    page = requests.get(url)
-    soup = bs4.BeautifulSoup(page.text, "html.parser")
+def get_recipes_from_soup(soup):
+    """Returns a list of recipe objects following Google's schema from a soup object"""
     # Gets all "script" tags with type "application/ld+json"
     json_tag_list = soup.find_all(lambda tag: tag.name == "script" and tag.get("type", "") == "application/ld+json")
     # Converts "script" tag text to json object
@@ -103,6 +104,9 @@ def get_recipes_from_url(url):
 
 if __name__ == "__main__":
     url = sys.argv[1]
-    res = get_recipes_from_url(url)
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'}
+    page = requests.get(url, headers=headers)
+    soup = bs4.BeautifulSoup(page.text, "html.parser")
+    res = get_recipes_from_soup(soup)
     json_string = json.dumps(res[0])
     print(json_string)

@@ -20,6 +20,7 @@ class Recipe(DB.Model):
     recipe_category = DB.Column(DB.Text())
     recipe_cuisine = DB.Column(DB.String(255))
     recipe_ingredient = DB.Column(sqlalchemy.dialects.postgresql.ARRAY(DB.Text()))
+    # recipe_ingredient_as_string = DB.Column(DB.Text())
     recipe_instructions = DB.Column(sqlalchemy.dialects.postgresql.ARRAY(DB.Text()))
     recipe_yield = DB.Column(DB.String(255))
     total_time = DB.Column(DB.Interval())
@@ -37,6 +38,7 @@ class Recipe(DB.Model):
                 "recipe_category": self.recipe_category,
                 "recipe_cuisine": self.recipe_cuisine,
                 "recipe_ingredient": self.recipe_ingredient,
+                # "recipe_ingredient_as_string": self.recipe_ingredient_as_string,
                 "recipe_instructions": self.recipe_instructions,
                 "recipe_yield": self.recipe_yield,
                 "total_time": None if self.total_time is None else self.total_time.total_seconds(),
@@ -59,6 +61,7 @@ def map_schema_to_db(**kwargs):
             "recipe_category": kwargs.get("recipeCategory", None),
             "recipe_cuisine": kwargs.get("recipeCuisine", None),
             "recipe_ingredient": kwargs.get("recipeIngredient", []),
+            # "recipe_ingredient_as_string": ''.join(kwargs.get("recipeIngredient", [])).lower(),
             "recipe_instructions": [x.get("text", "") for x in kwargs.get("recipeInstructions", [])],
             "recipe_yield": kwargs.get("recipeYield", None),
             "total_time": kwargs.get("totalTime", None),

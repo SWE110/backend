@@ -179,7 +179,7 @@ def do_search(search_params):
     # if "rejective" in search_params:
         # query_filters.append(~(models.Recipe.recipe_ingredient.overlap(search_params['rejective'])))r()))
 
-    recipes = [recipe.map_db_to_dict() for recipe in models.Recipe.query.filter(*query_filters).order_by(order).slice(start, start + count).all()]
+    recipes = [recipe.map_db_to_dict() for recipe in models.Recipe.query.filter(*query_filters).order_by(order).all()]
 
     # TODO FIX THIS UNSCALABALE STUFF
     if "restrictive" in search_params:
@@ -213,7 +213,12 @@ def do_search(search_params):
                 recipes_temp.append(recipe)
         recipes = recipes_temp
 
-    return recipes
+    if start >= len(recipes):
+        return []
+    elif start + count >= len(recipes):
+        return recipes[start:]
+    else:
+        return recipes[start:start + count]
 
 def do_crawl(crawler_params):
     """Starts and runs a crawler"""

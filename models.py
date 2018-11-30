@@ -45,19 +45,14 @@ class Recipe(DB.Model):
                }
 
 def map_schema_to_db(**kwargs):
-    """Generates soemthing that can be put in the db from a schema object"""
-   
-    #keywords to array
-    keywords = kwargs.get("keywords",[])
-    keywords = keywords.split(",")
-    keywords = [s.strip() for s in keywords]
+    """Generates something that can be put in the db from a schema object"""
 
     vals = {"meal_name": kwargs.get("name", None),
             "image": kwargs.get("image", []),
             "aggregate_rating": kwargs.get("aggregateRating", {}).get("ratingValue", None),
             "author": kwargs.get("author", {}).get("name", None),
             "description": kwargs.get("description", None),
-            "keywords": keywords,
+            "keywords": [s.strip() for s in kwargs.get("keywords", "").split(",")],
             "recipe_category": kwargs.get("recipeCategory", None),
             "recipe_cuisine": kwargs.get("recipeCuisine", None),
             "recipe_ingredient": kwargs.get("recipeIngredient", []),

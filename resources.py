@@ -1,4 +1,5 @@
 import uuid
+import functools
 
 import flask
 from flask import g
@@ -146,16 +147,49 @@ def do_search(search_params):
     query_filters = []
     if "title" in search_params:
         query_filters.append(models.DB.func.lower(models.Recipe.meal_name).contains(search_params['title'].lower()))
-    if "restrictive" in search_params:
-        # query_filters.append(models.Recipe.recipe_ingredient.all_().like(models.DB.any_(search_params['restrictive'])))
-        query_filters.append(models.db.func.bool_and(models.DB.func.unnest(models.Recipe.recipe_ingredient).like("%pizza%")))
-    if "inclusive" in search_params:
-        query_filters.append(models.Recipe.recipe_ingredient.overlap(search_params['inclusive']))
-    if "rejective" in search_params:
-        query_filters.append(~(models.Recipe.recipe_ingredient.overlap(search_params['rejective'])))
+    # if "restrictive" in search_params:
+        # # query_filters.append(models.Recipe.recipe_ingredient.all_().like(models.DB.any_(search_params['restrictive'])))
+        # query_filters.append(models.db.func.bool_and(models.DB.func.unnest(models.Recipe.recipe_ingredient).like("%pizza%")))
+    # if "inclusive" in search_params:
+        # query_filters.append(models.Recipe.recipe_ingredient.overlap(search_params['inclusive']))
+    # if "rejective" in search_params:
+        # query_filters.append(~(models.Recipe.recipe_ingredient.overlap(search_params['rejective'])))r()))
 
-    recipes = models.Recipe.query.filter(*query_filters).all()
-    return [r.map_db_to_dict() for r in recipes]
+    recipes = [recipe.map_db_to_dict() for recipe in models.Recipe.query.filter(*query_filters).all()]
+
+    # TODO FIX THIS UNSCALABALE STUFF
+    if "restrictive" in search_params:
+        ingredient_params = [param.lower() for param in search_params["restrictive"]]
+        recipes_temp = []
+        for recipe in recipes:
+            valid = True
+            for ingredient in recipe["recipe_ingredient"]:
+                valid &= functools.reduce((lambda x, y: x or y in ingredient.lower()), ingredient_params, False)
+            if valid:
+                recipes_temp.append(recipe)
+        recipes = recipes_temp
+    if "inclusive" in search_params:
+        ingredient_params = [param.lower() for param in search_params["inclusive"]]
+        recipes_temp = []
+        for recipe in recipes:
+            valid = False
+            for ingredient in recipe["recipe_ingredient"]:
+                valid |= functools.reduce((lambda x, y: x or y in ingredient.lower()), ingredient_params, False)
+            if valid:
+                recipes_temp.append(recipe)
+        recipes = recipes_temp
+    if "rejective" in search_params:
+        ingredient_params = [param.lower() for param in search_params["rejective"]]
+        recipes_temp = []
+        for recipe in recipes:
+            valid = False
+            for ingredient in recipe["recipe_ingredient"]:
+                valid |= functools.reduce((lambda x, y: x or y in ingredient.lower()), ingredient_params, False)
+            if not valid:
+                recipes_temp.append(recipe)
+        recipes = recipes_temp
+
+    return recipes
 
 def is_authorized():
     """Checks if the user is authorized."""

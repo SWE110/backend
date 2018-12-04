@@ -92,6 +92,42 @@ class Recipe(flask_restful.Resource):
         delete_recipe_from_db(recipe_id)
         return flask.Response("Deleted", status=204, mimetype='application/json')
 
+class Comment(flask_restful.Resource):
+    def get(self, comment_id):
+        """Gets one comment by its comment id."""
+        return models.Comment.query.filter_by(comment_id=comment_id).first().get_dict()
+
+    def delete(self, comment_id):
+        """Deletes one comment by its comment id."""
+        if not is_authorized():
+            return {'not': 'happening'}, 401
+
+        delete_comment_from_db(comment_id)
+        return flask.Response("Deleted", status=204, mimetype='application/json')
+
+class RecipeComment(flask_restful.Resource):
+    def get(self, recipe_id):
+        """Gets the comments for a recipe."""
+        return [comment.get_dict() for comment in models.Comment.query.filter_by(meal_id=recipe_id).all()]
+
+    @auth.login_required
+    def post(self, recipe_id):
+        """Posts a comment to a recipe."""
+        if not flask.request.is_json:
+            flask_restful.abort(400, message="Not formatted as json.")
+
+        comment_data = flask.request.get_json()
+        comment_data_validated = {"user_id": g.user.user_id
+                                  "meal_id": recipe_id
+                                  "user_comment": comment_data.get("text", "")
+                                 }
+
+        comment_id = add_comment_to_db(**comment_data_validated)
+        if not comment_id:
+            flask_restful.abort(500, message="Create failed.")
+
+        return flask.Response(recipe_id, status=201, mimetype='application/json')
+
 class Search(flask_restful.Resource):
     def options(self):
         pass
@@ -150,9 +186,28 @@ def add_recipe_to_db(**kwargs):
 
 def delete_recipe_from_db(recipe_id):
     """Deletes a recipe from the db."""
-    recipes = models.Recipe.query.filter_by(meal_id=recipe_id)
+    recipes = models.Recipe.query.filter_by(meal_id=recipe_id).all()
     for recipe in recipes:
         models.DB.session.delete(recipe)
+        comments = models.Comment.query.filter_by(meal_id=recipe_id).all()
+        for comment in comments:
+            delete_comment_from_db(comment.comment_id)
+
+    models.DB.session.commit()
+    # TODO: try to make sure that commit only called when necessary... Maybe decorator?
+
+def add_comment_to_db(**kwargs):
+    """Adds a comment to the db."""
+    comment = models.Comment(**kwargs)
+    models.DB.session.add(comment)
+    models.DB.session.commit()
+    return comment.meal_id.hex
+
+def delete_comment_from_db(comment_id):
+    """Deletes a comment from the db."""
+    comments = models.Comment.query.filter_by(comment_id=comment_id).all()
+    for comment in comments:
+        models.DB.session.delete(comment)
 
     models.DB.session.commit()
 

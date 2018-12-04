@@ -25,6 +25,8 @@ def test_set_up():
 
 api.add_resource(resources.RecipeList, "/recipe")
 api.add_resource(resources.Recipe, "/recipe/<recipe_id>")
+api.add_resource(resources.Comment, "/comment/<comment_id>")
+api.add_resource(resources.RecipeComment, "/recipe/<recipe_id>/comment")
 api.add_resource(resources.Search, "/search")
 api.add_resource(resources.Crawl, "/crawl")
 api.add_resource(resources.CreateUser, "/user/create")

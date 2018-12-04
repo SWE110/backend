@@ -100,6 +100,14 @@ class Comment(DB.Model):
     meal_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), DB.ForeignKey("recipe.meal_id"), default=uuid.uuid4)
     user_comment = DB.Column(DB.Text())
 
+    def get_dict(self):
+        """Returns a dictionary representation of this object that can be jsonified"""
+        return {"comment_id": self.comment_id,
+                "user_id": self.user_id,
+                "meal_id": self.meal_id,
+                "user_comment": self.user_comment
+               }
+
 class Report(DB.Model):
     report_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
     user_id = DB.Column(DB.String(255), DB.ForeignKey("user.user_id"))

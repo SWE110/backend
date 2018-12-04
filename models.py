@@ -85,26 +85,26 @@ class Search(DB.Model):
     # Update columns as needed to be more efficient. Right now search just stores the pickled dictionary of search options
 
 class Inventory(DB.Model):
-    inventory_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    inventory_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = DB.Column(DB.String(255), DB.ForeignKey("user.user_id"))
     user_ingredients = DB.Column(DB.Text())
 
 class SavedRecipe(DB.Model):
-    saved_recipe_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    saved_recipe_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = DB.Column(DB.String(255), DB.ForeignKey("user.user_id"))
     meal_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), DB.ForeignKey("recipe.meal_id"), default=uuid.uuid4)
 
 class Comment(DB.Model):
-    comment_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), primary_key=True, default=uuid.uuid4)
+    comment_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = DB.Column(DB.String(255), DB.ForeignKey("user.user_id"))
-    meal_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(), DB.ForeignKey("recipe.meal_id"), default=uuid.uuid4)
+    meal_id = DB.Column(sqlalchemy.dialects.postgresql.UUID(as_uuid=True), DB.ForeignKey("recipe.meal_id"))
     user_comment = DB.Column(DB.Text())
 
     def get_dict(self):
         """Returns a dictionary representation of this object that can be jsonified"""
-        return {"comment_id": self.comment_id,
+        return {"comment_id": self.comment_id.hex,
                 "user_id": self.user_id,
-                "meal_id": self.meal_id,
+                "meal_id": self.meal_id.hex,
                 "user_comment": self.user_comment
                }
 

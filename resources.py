@@ -117,8 +117,8 @@ class RecipeComment(flask_restful.Resource):
             flask_restful.abort(400, message="Not formatted as json.")
 
         comment_data = flask.request.get_json()
-        comment_data_validated = {"user_id": g.user.user_id
-                                  "meal_id": recipe_id
+        comment_data_validated = {"user_id": g.user.user_id,
+                                  "meal_id": recipe_id,
                                   "user_comment": comment_data.get("text", "")
                                  }
 

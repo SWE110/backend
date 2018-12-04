@@ -1,3 +1,4 @@
+import re
 import uuid
 import functools
 
@@ -218,14 +219,20 @@ def do_search(search_params):
                      "aggregate_rating": -models.Recipe.aggregate_rating.asc(),
                      "total_time": models.Recipe.total_time.asc()
                     }
+    regex_extract_params = re.compile("(\w+)\s*:\s*\"([^\"]+)\"")
+    regex_extract_title_words = re.compile("(?:\A|\s+)([\d\w]+)(?:\s+|\Z)")
+    regex_comma_split = re.compile("\s*,\s*")
 
     start = int(search_params.get("start", "0")) # move to get request when possible
     count = int(search_params.get("count", "20")) # move to get request when possible
     order = order_options.get(search_params.get("order", ""), models.Recipe.meal_id.asc())
 
+    search_bar_params = dict(regex_extract_params.findall(search_params.get("title", "")))
+    search_bar_title_words = " ".join(regex_extract_title_words.findall(search_params.get("title", "")))
+
     query_filters = []
-    if "title" in search_params:
-        query_filters.append(models.DB.func.lower(models.Recipe.meal_name).contains(search_params['title'].lower()))
+    if search_bar_title_words:
+        query_filters.append(models.DB.func.lower(models.Recipe.meal_name).contains(search_bar_title_words.lower()))
     # if "restrictive" in search_params:
         # # query_filters.append(models.Recipe.recipe_ingredient.all_().like(models.DB.any_(search_params['restrictive'])))
         # query_filters.append(models.db.func.bool_and(models.DB.func.unnest(models.Recipe.recipe_ingredient).like("%pizza%")))
@@ -237,8 +244,8 @@ def do_search(search_params):
     recipes = [recipe.map_db_to_dict() for recipe in models.Recipe.query.filter(*query_filters).order_by(order).all()]
 
     # TODO FIX THIS UNSCALABALE STUFF
-    if "restrictive" in search_params:
-        ingredient_params = [param.lower() for param in search_params["restrictive"]]
+    if "restrictive" in search_bar_params:
+        ingredient_params = [param.lower() for param in regex_comma_split.split(search_bar_params["restrictive"])]
         recipes_temp = []
         for recipe in recipes:
             valid = True
@@ -247,8 +254,8 @@ def do_search(search_params):
             if valid:
                 recipes_temp.append(recipe)
         recipes = recipes_temp
-    if "inclusive" in search_params:
-        ingredient_params = [param.lower() for param in search_params["inclusive"]]
+    if "inclusive" in search_bar_params:
+        ingredient_params = [param.lower() for param in regex_comma_split.split(search_bar_params["inclusive"])]
         recipes_temp = []
         for recipe in recipes:
             valid = False
@@ -257,8 +264,8 @@ def do_search(search_params):
             if valid:
                 recipes_temp.append(recipe)
         recipes = recipes_temp
-    if "rejective" in search_params:
-        ingredient_params = [param.lower() for param in search_params["rejective"]]
+    if "rejective" in search_bar_params:
+        ingredient_params = [param.lower() for param in regex_comma_split.split(search_bar_params["rejective"])]
         recipes_temp = []
         for recipe in recipes:
             valid = False

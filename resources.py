@@ -233,6 +233,9 @@ def do_search(search_params):
     query_filters = []
     if search_bar_title_words:
         query_filters.append(models.DB.func.lower(models.Recipe.meal_name).contains(search_bar_title_words.lower()))
+    if "yield" in search_bar_params:
+        query_filters.append(models.Recipe.recipe_yield != None)
+        query_filters.append(models.DB.func.lower(models.Recipe.recipe_yield).contains(search_bar_params["yield"]))
     # if "restrictive" in search_params:
         # # query_filters.append(models.Recipe.recipe_ingredient.all_().like(models.DB.any_(search_params['restrictive'])))
         # query_filters.append(models.db.func.bool_and(models.DB.func.unnest(models.Recipe.recipe_ingredient).like("%pizza%")))

@@ -59,7 +59,7 @@ class RecipeList(flask_restful.Resource):
         start = int(flask.request.args.get("start", "0"))
         count = int(flask.request.args.get("count", "20"))
 
-        return [recipe.map_db_to_dict() for recipe in models.Recipe.query.slice(start, start + count).all()]
+        return [recipe.get_dict() for recipe in models.Recipe.query.slice(start, start + count).all()]
 
     def post(self):
         """Creates a recipe based on receieved parameters and adds it to the db."""
@@ -83,7 +83,7 @@ class Recipe(flask_restful.Resource):
         if not is_authorized():
             return {'not': 'happening'}, 401
 
-        return models.Recipe.query.filter_by(meal_id=recipe_id).first().map_db_to_dict()
+        return models.Recipe.query.filter_by(meal_id=recipe_id).first().get_dict()
 
     def delete(self, recipe_id):
         """Deletes one recipe by its recipe id."""
@@ -127,7 +127,7 @@ class RecipeComment(flask_restful.Resource):
         if not comment_id:
             flask_restful.abort(500, message="Create failed.")
 
-        return flask.Response(recipe_id, status=201, mimetype='application/json')
+        return flask.Response(comment_id, status=201, mimetype='application/json')
 
 class Search(flask_restful.Resource):
     def options(self):
@@ -175,7 +175,7 @@ def add_recipe_to_db(**kwargs):
     if "full_content" in kwargs:
         # generate all fields as in kwargs["full_content"].
         # use this to just copy from scraped data already formatted in schema.
-        recipe = models.map_schema_to_db(**kwargs["full_content"])
+        recipe = models.Recipe(from_schema=kwargs["full_content"])
         models.DB.session.add(recipe)
         models.DB.session.commit()
 
@@ -244,7 +244,7 @@ def do_search(search_params):
     # if "rejective" in search_params:
         # query_filters.append(~(models.Recipe.recipe_ingredient.overlap(search_params['rejective'])))r()))
 
-    recipes = [recipe.map_db_to_dict() for recipe in models.Recipe.query.filter(*query_filters).order_by(order).all()]
+    recipes = [recipe.get_dict() for recipe in models.Recipe.query.filter(*query_filters).order_by(order).all()]
 
     # TODO FIX THIS UNSCALABALE STUFF
     if "restrictive" in search_bar_params:

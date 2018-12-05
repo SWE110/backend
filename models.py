@@ -25,7 +25,28 @@ class Recipe(DB.Model):
     recipe_yield = DB.Column(DB.String(255))
     total_time = DB.Column(DB.Interval())
 
-    def map_db_to_dict(self):
+    def __init__(from_schema=None, **kwargs):
+        """Creates a recipe object either from the keyword arguments or does a conversion from the schema.org schema"""
+        if from_schema is None:
+            super().__init__(**kwargs)
+        else:
+            vals = {"meal_name": from_schema.get("name", None),
+                    "image": from_schema.get("image", []),
+                    "aggregate_rating": from_schema.get("aggregateRating", {}).get("ratingValue", None),
+                    "author": from_schema.get("author", {}).get("name", None),
+                    "description": from_schema.get("description", None),
+                    "keywords": [s.strip() for s in from_schema.get("keywords", "").split(",")],
+                    "recipe_category": from_schema.get("recipeCategory", None),
+                    "recipe_cuisine": from_schema.get("recipeCuisine", None),
+                    "recipe_ingredient": from_schema.get("recipeIngredient", []),
+                    # "recipe_ingredient_as_string": ''.join(from_schema.get("recipeIngredient", [])).lower(),
+                    "recipe_instructions": [x.get("text", "") for x in from_schema.get("recipeInstructions", [])],
+                    "recipe_yield": from_schema.get("recipeYield", None),
+                    "total_time": from_schema.get("totalTime", None),
+                   }
+            super().__init__(**vals)
+
+    def get_dict(self):
         """Returns a dictionary representation of this object that can be jsonified."""
         return {"meal_id": self.meal_id.hex,
                 "name": self.meal_name,
@@ -43,25 +64,6 @@ class Recipe(DB.Model):
                 "recipe_yield": self.recipe_yield,
                 "total_time": None if self.total_time is None else self.total_time.total_seconds(),
                }
-
-def map_schema_to_db(**kwargs):
-    """Generates something that can be put in the db from a schema object"""
-
-    vals = {"meal_name": kwargs.get("name", None),
-            "image": kwargs.get("image", []),
-            "aggregate_rating": kwargs.get("aggregateRating", {}).get("ratingValue", None),
-            "author": kwargs.get("author", {}).get("name", None),
-            "description": kwargs.get("description", None),
-            "keywords": [s.strip() for s in kwargs.get("keywords", "").split(",")],
-            "recipe_category": kwargs.get("recipeCategory", None),
-            "recipe_cuisine": kwargs.get("recipeCuisine", None),
-            "recipe_ingredient": kwargs.get("recipeIngredient", []),
-            # "recipe_ingredient_as_string": ''.join(kwargs.get("recipeIngredient", [])).lower(),
-            "recipe_instructions": [x.get("text", "") for x in kwargs.get("recipeInstructions", [])],
-            "recipe_yield": kwargs.get("recipeYield", None),
-            "total_time": kwargs.get("totalTime", None),
-           }
-    return Recipe(**vals)
 
 class User(DB.Model):
     user_id = DB.Column(DB.String(255), primary_key=True, nullable=False)

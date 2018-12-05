@@ -220,7 +220,7 @@ def do_search(search_params):
                      "total_time": models.Recipe.total_time.asc()
                     }
     regex_extract_params = re.compile("(\w+)\s*:\s*\"([^\"]+)\"")
-    regex_extract_title_words = re.compile("(?:\A|\s+)([\d\w]+)(?:\s+|\Z)")
+    regex_extract_title_words = re.compile("(?:\A|\s+)([\d\w]+)(?=\s+|\Z)")
     regex_comma_split = re.compile("\s*,\s*")
 
     start = int(search_params.get("start", "0")) # move to get request when possible

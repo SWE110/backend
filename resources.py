@@ -52,19 +52,15 @@ class CreateUser(flask_restful.Resource):
 
 class RecipeList(flask_restful.Resource):
     def get(self):
-        """Gets the top 10 recipes."""
-        if not is_authorized():
-            return {'not': 'happening'}, 401
-
+        """Gets some recipes."""
         start = int(flask.request.args.get("start", "0"))
         count = int(flask.request.args.get("count", "20"))
 
         return [recipe.get_dict() for recipe in models.Recipe.query.slice(start, start + count).all()]
 
+    @auth.login_required
     def post(self):
         """Creates a recipe based on receieved parameters and adds it to the db."""
-        if not is_authorized():
-            return {'not': 'happening'}, 401
         if not flask.request.is_json:
             flask_restful.abort(400, message="Not formatted as json.")
         print("Creating recipe")
@@ -80,16 +76,11 @@ class RecipeList(flask_restful.Resource):
 class Recipe(flask_restful.Resource):
     def get(self, recipe_id):
         """Gets one recipe by its recipe id."""
-        if not is_authorized():
-            return {'not': 'happening'}, 401
-
         return models.Recipe.query.filter_by(meal_id=recipe_id).first().get_dict()
 
+    @auth.login_required
     def delete(self, recipe_id):
         """Deletes one recipe by its recipe id."""
-        if not is_authorized():
-            return {'not': 'happening'}, 401
-
         delete_recipe_from_db(recipe_id)
         return flask.Response("Deleted", status=204, mimetype='application/json')
 
@@ -98,11 +89,9 @@ class Comment(flask_restful.Resource):
         """Gets one comment by its comment id."""
         return models.Comment.query.filter_by(comment_id=comment_id).first().get_dict()
 
+    @auth.login_required
     def delete(self, comment_id):
         """Deletes one comment by its comment id."""
-        if not is_authorized():
-            return {'not': 'happening'}, 401
-
         delete_comment_from_db(comment_id)
         return flask.Response("Deleted", status=204, mimetype='application/json')
 
@@ -162,13 +151,13 @@ class Search(flask_restful.Resource):
         # flask.redirect(flask.url_for(Search.get, id=search_id), code=307)
 
 class Crawl(flask_restful.Resource):
+    @auth.login_required
     def post(self):
         """Starts a crawler"""
         if not flask.request.is_json:
             flask_restful.abort(400, message="Not formatted as json.")
 
         return do_crawl(flask.request.get_json())
-        
 
 def add_recipe_to_db(**kwargs):
     """Adds a recipe to the db."""
@@ -294,7 +283,3 @@ def do_crawl(crawler_params):
     crawler_params["recipe_callback_args"] = (current_app._get_current_object(),)
     crawler_params["recipe_callback_kwargs"] = {}
     crawler.Crawler(**crawler_params)
-
-def is_authorized():
-    """Checks if the user is authorized."""
-    return True

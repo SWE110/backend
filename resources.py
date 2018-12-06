@@ -213,7 +213,7 @@ def do_search(search_params):
 
     start = int(search_params.get("start", "0")) # move to get request when possible
     count = int(search_params.get("count", "20")) # move to get request when possible
-    order = order_options.get(search_params.get("order", ""), -models.Recipe.aggregate_rating.asc())
+    order = order_options.get(search_params.get("order", ""), models.Recipe.meal_id.asc())
 
     all_params = list(zip(*regex_extract_params.findall(search_params.get("title", ""))))
     # gets any hanging words

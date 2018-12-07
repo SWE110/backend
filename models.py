@@ -1,3 +1,4 @@
+import re
 import uuid
 import datetime
 
@@ -14,7 +15,9 @@ class Recipe(DB.Model):
     image = DB.Column(sqlalchemy.dialects.postgresql.ARRAY(DB.Text()))
     aggregate_rating = DB.Column(DB.Float)
     author = DB.Column(DB.String(255))
+    uploader_id = DB.Column(DB.String(255))
     date_published = DB.Column(DB.Date, default=datetime.date.today)
+    src_url = DB.Column(DB.String(255))
     description = DB.Column(DB.Text())
     keywords = DB.Column(sqlalchemy.dialects.postgresql.ARRAY(DB.Text()))
     recipe_category = DB.Column(DB.Text())
@@ -23,6 +26,8 @@ class Recipe(DB.Model):
     # recipe_ingredient_as_string = DB.Column(DB.Text())
     recipe_instructions = DB.Column(sqlalchemy.dialects.postgresql.ARRAY(DB.Text()))
     recipe_yield = DB.Column(DB.String(255))
+    # calculated from yield
+    recipe_servings = DB.Column(DB.Integer)
     total_time = DB.Column(DB.Interval())
 
     def __init__(self, from_schema=None, **kwargs):
@@ -30,10 +35,21 @@ class Recipe(DB.Model):
         if from_schema is None:
             super().__init__(**kwargs)
         else:
+            regex_extract_servings = re.compile("(?ai)serves (\d+)")
+            recipe_yield = from_schema.get("recipeYield", None)
+            if recipe_yield is not None:
+                recipe_servings = regex_extract_servings.findall(recipe_yield)
+                raise ValueError(recipe_servings)
+                if not recipe_servings:
+                    recipe_servings = None
+                else:
+                    recipe_servings = int(recipe_servings[0])
             vals = {"meal_name": from_schema.get("name", None),
                     "image": from_schema.get("image", []),
                     "aggregate_rating": from_schema.get("aggregateRating", {}).get("ratingValue", None),
                     "author": from_schema.get("author", {}).get("name", None),
+                    "uploader_id": kwargs.get("uploader_id", None),
+                    "src_url": kwargs.get("src_url", None),
                     "description": from_schema.get("description", None),
                     "keywords": [s.strip() for s in from_schema.get("keywords", "").split(",")],
                     "recipe_category": from_schema.get("recipeCategory", None),
@@ -41,7 +57,8 @@ class Recipe(DB.Model):
                     "recipe_ingredient": from_schema.get("recipeIngredient", []),
                     # "recipe_ingredient_as_string": ''.join(from_schema.get("recipeIngredient", [])).lower(),
                     "recipe_instructions": [x.get("text", "") for x in from_schema.get("recipeInstructions", [])],
-                    "recipe_yield": from_schema.get("recipeYield", None),
+                    "recipe_yield": recipe_yield,
+                    "recipe_servings": recipe_servings,
                     "total_time": from_schema.get("totalTime", None),
                    }
             super().__init__(**vals)
@@ -53,6 +70,8 @@ class Recipe(DB.Model):
                 "image": self.image,
                 "aggregate_rating": self.aggregate_rating,
                 "author": self.author,
+                "uploader_id": self.uploader_id,
+                "src_url": self.src_url,
                 "date_published": self.date_published.isoformat(),
                 "desciption": self.description,
                 "keywords": self.keywords,
@@ -62,6 +81,7 @@ class Recipe(DB.Model):
                 # "recipe_ingredient_as_string": self.recipe_ingredient_as_string,
                 "recipe_instructions": self.recipe_instructions,
                 "recipe_yield": self.recipe_yield,
+                "recipe_servings": self.recipe_servings,
                 "total_time": None if self.total_time is None else self.total_time.total_seconds(),
                }
 

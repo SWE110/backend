@@ -164,7 +164,12 @@ def add_recipe_to_db(**kwargs):
     if "full_content" in kwargs:
         # generate all fields as in kwargs["full_content"].
         # use this to just copy from scraped data already formatted in schema.
-        recipe = models.Recipe(from_schema=kwargs["full_content"])
+        extra_kwargs = {}
+        if "src_url" in kwargs:
+            extra_kwargs["src_url"] = kwargs["src_url"]
+        if "uploader_id" in kwargs:
+            extra_kwargs["uploader_id"] = kwargs["uploader_id"]
+        recipe = models.Recipe(from_schema=kwargs["full_content"], **extra_kwargs)
         models.DB.session.add(recipe)
         models.DB.session.commit()
 
@@ -206,6 +211,7 @@ def do_search(search_params):
     order_options = {
                      "meal_id": models.Recipe.meal_id.asc(),
                      "aggregate_rating": -models.Recipe.aggregate_rating.asc(),
+                     "yield": models.Recipe.recipe_servings.asc(),
                      "total_time": models.Recipe.total_time.asc()
                     }
     regex_extract_params = re.compile("(\w+)\s*:\s*\"([^\"]+)\"|(\w+)")
@@ -276,11 +282,13 @@ def do_search(search_params):
     else:
         return recipes[start:start + count]
 
+@auth.login_required
 def do_crawl(crawler_params):
     """Starts and runs a crawler"""
+    user_id = g.user.user_id
     def crawler_callback(recipe, app):
         with app.app_context():
-            add_recipe_to_db(full_content=recipe)
+            add_recipe_to_db(full_content=recipe, uploader_id=user_id, src_url=crawler_params["base_url"])
     crawler_params["recipe_callback"] = crawler_callback
     crawler_params["recipe_callback_args"] = (current_app._get_current_object(),)
     crawler_params["recipe_callback_kwargs"] = {}

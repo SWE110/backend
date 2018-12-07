@@ -25,7 +25,7 @@ class Recipe(DB.Model):
     recipe_yield = DB.Column(DB.String(255))
     total_time = DB.Column(DB.Interval())
 
-    def __init__(from_schema=None, **kwargs):
+    def __init__(self, from_schema=None, **kwargs):
         """Creates a recipe object either from the keyword arguments or does a conversion from the schema.org schema"""
         if from_schema is None:
             super().__init__(**kwargs)

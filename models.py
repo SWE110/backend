@@ -39,7 +39,6 @@ class Recipe(DB.Model):
             recipe_yield = from_schema.get("recipeYield", None)
             if recipe_yield is not None:
                 recipe_servings = regex_extract_servings.findall(recipe_yield)
-                raise ValueError(recipe_servings)
                 if not recipe_servings:
                     recipe_servings = None
                 else:
